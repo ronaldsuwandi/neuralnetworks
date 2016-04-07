@@ -1,10 +1,8 @@
 # neuralnetworks
 
-[![Build Status](https://travis-ci.org/ronaldsuwandi/neuralnetworks.svg?branch=master)](https://travis-ci.org/ronaldsuwandi/neuralnetworks)
-
 [![Clojars Project](https://clojars.org/ronaldsuwandi/neuralnetworks/latest-version.svg)](https://clojars.org/ronaldsuwandi/neuralnetworks)
 
-[![Dependency Status](https://www.versioneye.com/user/projects/57066022fcd19a004543fcfd/badge.svg?style=flat)](https://www.versioneye.com/user/projects/57066022fcd19a004543fcfd)
+[![Build Status](https://travis-ci.org/ronaldsuwandi/neuralnetworks.svg?branch=master)](https://travis-ci.org/ronaldsuwandi/neuralnetworks) [![Dependency Status](https://www.versioneye.com/user/projects/57066022fcd19a004543fcfd/badge.svg?style=flat)](https://www.versioneye.com/user/projects/57066022fcd19a004543fcfd)
 
 Neural networks library for Clojure. Built on top of [core.matrix](https://github.com/mikera/core.matrix) 
 array programming API 

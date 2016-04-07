@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/ronaldsuwandi/neuralnetworks.svg?branch=master)](https://travis-ci.org/ronaldsuwandi/neuralnetworks)
 
+[![Clojars Project](https://img.shields.io/clojars/v/ronaldsuwandi/neuralnetworks.svg)](https://clojars.org/ronaldsuwandi/neuralnetworks)
+
 [![Dependency Status](https://www.versioneye.com/user/projects/57066022fcd19a004543fcfd/badge.svg?style=flat)](https://www.versioneye.com/user/projects/57066022fcd19a004543fcfd)
 
 Neural networks library for Clojure. Built on top of [core.matrix](https://github.com/mikera/core.matrix) 
@@ -17,6 +19,8 @@ Currently it has the following features
 - Multiple stopping conditions. Currently it supports stopping conditions based on error or number
   of iterations. If multiple stopping conditions are provided, it will be treated as `OR` (if either
   stopping condition is fulfilled, the optimizer stops training)
+
+## Note - this library is not yet production ready
 
 ## Usage
 

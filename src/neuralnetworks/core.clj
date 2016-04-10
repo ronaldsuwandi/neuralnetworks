@@ -68,19 +68,28 @@
   "Creates new instance of neural networks.
 
    Options will be a hash map of
-   {:learning-rate value
-    :regularization-rate value
+
+   ```
+   {:regularization-rate value
     :activation-fn function
-    :stopping-conditions [functions]
     :optimizer optimizer}
+   ```
 
    Thetas would be the vector of initial weights matrices between each layer. To create a single
    hidden layer, Thetas would be a vector of two weight matrices.
 
-   Stopping conditions is a vector of stopping condition functions. By default training will be
-   finished once it reaches 100 iterations (max-iteration stopping condition). If multiple stopping
-   conditions are provided, it will be treated as *OR* meaning as long as one of the condition is
-   satisfied, training will be stopped
+   If optimizer is not specified, by default it will use gradient descent optimizer with the
+   following settings:
+
+   * initial learning rate of 8
+   * learning rate update of 0.5
+   * single stopping condition of 100 iterations
+
+   Stopping conditions is a vector of stopping condition functions used by the optimizer which in
+   turn used by neural networks training function.
+
+   If multiple stopping conditions are provided, it will be treated as *OR* meaning as long as one
+   of the condition is satisfied, training will be stopped (i.e. optimizer is finished)
 
    Returns a hashmap
    ```
@@ -88,10 +97,8 @@
      :input input-matrix
      :output output-matrix
      :regularization-rate value (default is 0)
-     :learning-rate value (default is 1)
-     :stopping-conditions [function-1, function-2, ...] (default is 100 iterations)
      :activation-fn function (default is sigmoid)
-     :optimizer optimizer function (default is gradient-descent)
+     :optimizer optimizer function (default is gradient-descent with the default options)
      :states {
                :thetas [theta-matrix-1, theta-matrix-2, ...]
                :iteration (atom 0)
@@ -103,18 +110,12 @@
    (new-instance input thetas output {}))
   ([input thetas output options]
    (let [merged-options (merge {:regularization-rate 0
-                                :learning-rate       1
                                 :activation-fn       sigmoid
-                                :stopping-conditions [(max-iterations 100)]}
-                               options)
-         merged-options (merge {:optimizer (gradient-descent (:learning-rate merged-options)
-                                                             (:stopping-conditions merged-options))}
-                               merged-options)]
+                                :optimizer (gradient-descent 8 0.5 [(max-iterations 100)])}
+                               options)]
      {:input               input
       :output              output
       :regularization-rate (:regularization-rate merged-options)
-      :learning-rate       (:learning-rate merged-options)
-      :stopping-conditions (:stopping-conditions merged-options)
       :activation-fn       (:activation-fn merged-options)
       :optimizer           (:optimizer merged-options)
       :states              {:thetas    (atom thetas)

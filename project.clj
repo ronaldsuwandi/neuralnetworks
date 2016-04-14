@@ -1,4 +1,4 @@
-(defproject ronaldsuwandi/neuralnetworks "0.1.0-SNAPSHOT"
+(defproject ronaldsuwandi/neuralnetworks "0.1.1-SNAPSHOT"
   :description "Neural networks library for Clojure. Built on top of core.matrix"
   :url "https://ronaldsuwandi.github.io/neuralnetworks/"
   :license {:name "MIT License"

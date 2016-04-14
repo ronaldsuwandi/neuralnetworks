@@ -1,5 +1,6 @@
 (ns neuralnetworks.optimizer.gradient-descent
   (:require [clojure.core.matrix :as m]
+            [neuralnetworks.utils :refer [approx]]
             [neuralnetworks.optimizer :refer :all]))
 
 (defn update-thetas
@@ -20,21 +21,22 @@
 
    Reference: [Gradient Descent Revisited](https://www.cs.cmu.edu/~ggordon/10725-F12/slides/05-gd-revisited.pdf)"
   [cost-fn init-alpha beta thetas theta-gradients]
-  ; FIXME if beta is 1, ignore line search
-  (let [zero-matrix (m/zero-vector (m/length theta-gradients))]
-    (loop [alpha init-alpha]
-      (let [theta-with-gradient (m/sub thetas (m/mul alpha theta-gradients))
-            cost-theta-with-alpha (:cost (cost-fn theta-with-gradient))
-            cost-theta (:cost (cost-fn thetas))
-            gradient-length-squard-with-alpha (-> theta-gradients
-                                                  m/length-squared
-                                                  (* alpha 0.5))]
+  (if (approx beta 1.0 1e-10)
+    init-alpha
+    (let [zero-matrix (m/zero-vector (m/length theta-gradients))]
+      (loop [alpha init-alpha]
+        (let [theta-with-gradient (m/sub thetas (m/mul alpha theta-gradients))
+              cost-theta-with-alpha (:cost (cost-fn theta-with-gradient))
+              cost-theta (:cost (cost-fn thetas))
+              gradient-length-squard-with-alpha (-> theta-gradients
+                                                    m/length-squared
+                                                    (* alpha 0.5))]
 
-        (if (or (<= cost-theta-with-alpha (- cost-theta gradient-length-squard-with-alpha))
-                (<= alpha 1e-10)
-                (m/equals theta-gradients zero-matrix 1e-10))
-          alpha
-          (recur (* beta alpha)))))))
+          (if (or (<= cost-theta-with-alpha (- cost-theta gradient-length-squard-with-alpha))
+                  (approx alpha 0.0 1e-10)
+                  (m/equals theta-gradients zero-matrix 1e-10))
+            alpha
+            (recur (* beta alpha))))))))
 
 (defrecord GradientDescent [initial-learning-rate learning-rate-update-rate stopping-conditions]
   Optimizer

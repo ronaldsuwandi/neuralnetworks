@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [neuralnetworks.core :as nn]
             [neuralnetworks.optimizer.stopping-conditions :refer [max-iterations]]
+            [neuralnetworks.optimizer.gradient-descent :as gd]
             [clojure.core.matrix :as m]))
 
 (deftest test-train-and
@@ -16,12 +17,7 @@
         theta-hidden-layer-output (m/array [[0.453169 -1.037344 -0.837474 0.985438]])
         thetas [theta-input-hidden-layer theta-hidden-layer-output]
         output (m/array [[0] [0] [0] [1]])
-        instance (nn/new-instance input
-                                  thetas
-                                  output
-                                  {:regularization-rate 0
-                                   :learning-rate       2
-                                   :stopping-conditions [(max-iterations 200)]})]
+        instance (nn/new-instance input thetas output {})]
     (nn/train! instance)
     (is (m/equals output (nn/predict instance input) 0.1))))
 
@@ -37,12 +33,7 @@
         theta-hidden-layer-output (m/array [[0.453169 -1.037344 -0.837474 0.985438]])
         thetas [theta-input-hidden-layer theta-hidden-layer-output]
         output (m/array [[0] [1] [1] [0]])
-        instance (nn/new-instance input
-                                  thetas
-                                  output
-                                  {:regularization-rate 0
-                                   :learning-rate       2
-                                   :stopping-conditions [(max-iterations 200)]})]
+        instance (nn/new-instance input thetas output {})]
     (nn/train! instance)
     (is (m/equals output (nn/predict instance input) 0.1))))
 

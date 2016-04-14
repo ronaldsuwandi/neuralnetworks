@@ -18,7 +18,7 @@ Currently it has the following features
   of iterations. If multiple stopping conditions are provided, it will be treated as `OR` (if either
   stopping condition is fulfilled, the optimizer stops training)
 
-## Note - this library is not yet production ready
+**Note - this library is not yet production ready**
 
 ## Usage
 
@@ -51,8 +51,10 @@ the available options
 * `:learning-rate` (or alpha) - default value is 1.0
 * `:regularization-rate` (or lambda) - default value is 0.0
 * `:activation-fn` - default value is sigmoid function
-* `:stopping-conditions` - default value is maximum iterations of 100
-* `:optimizer` - default value is gradient descent
+* `:optimizer` - default value is gradient descent with the following settings
+    * learning rate of 8
+    * learning rate update rate of 0.5
+    * single stopping conditions of 100 iterations
 
 Example of options
 
@@ -63,6 +65,5 @@ Example of options
 
 (def options {:activation-fn sigmoid
               :stopping-conditions [(max-iterations 100)]
-              :optimizer (gradient-descent (:learning-rate merged-options)
-                                           (:stopping-conditions merged-options))})
+              :optimizer (gradient-descent 8 0.5 [(max-iterations 100)]})
 ```

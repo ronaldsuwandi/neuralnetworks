@@ -1,9 +1,8 @@
 (ns neuralnetworks.core-test
   (:require [clojure.test :refer :all]
             [neuralnetworks.core :as nn]
-            [neuralnetworks.optimizer.stopping-conditions :refer [max-iterations]]
-            [neuralnetworks.optimizer.gradient-descent :as gd]
-            [clojure.core.matrix :as m]))
+            [clojure.core.matrix :as m]
+            [neuralnetworks.sigmoid-fn :as sigmoid-fn]))
 
 (deftest test-train-and
   (let [input (m/array [[0 0]
@@ -22,9 +21,9 @@
     (is (m/equals output (nn/predict instance input) 0.1))))
 
 (deftest test-train-xor
-  (let [input (m/array [[0 0]
-                        [0 1]
-                        [1 0]
+  (let [input (m/array [[-1 -1]
+                        [-1 1]
+                        [1 -1]
                         [1 1]])
         ; thetas values are generated from `(nn/randomize-thetas 2 [3] 1)`
         theta-input-hidden-layer (m/array [[-0.453452 0.510620 -0.773563]
@@ -32,10 +31,13 @@
                                            [-0.534591 0.786677 0.756434]])
         theta-hidden-layer-output (m/array [[0.453169 -1.037344 -0.837474 0.985438]])
         thetas [theta-input-hidden-layer theta-hidden-layer-output]
-        output (m/array [[0] [1] [1] [0]])
-        instance (nn/new-instance input thetas output {})]
-    (nn/train! instance)
-    (is (m/equals output (nn/predict instance input) 0.1))))
+        output (m/array [[-1] [1] [1] [-1]])
+        instance (nn/new-instance input thetas output {:sigmoid-fn sigmoid-fn/hyperbolic-tangent
+                                                       :optimizer (neuralnetworks.optimizer.gradient-descent/gradient-descent 1 1 [(neuralnetworks.optimizer.stopping-conditions/max-iterations 1)])})]
+        ;instance (nn/new-instance input thetas output {})]
+    (time (nn/train! instance))
+    (prn (nn/predict instance input))))
+    ;(is (m/equals output (nn/predict instance input) 0.1))))
 
 (deftest test-randomize-theta-dimensions
   (let [thetas-no-hidden-layer (nn/randomize-thetas 2 [] 1)

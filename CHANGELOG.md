@@ -1,15 +1,18 @@
 # Change Log
 
-## Unreleased
+## 0.1.2-SNAPSHOT
 ### Added
-- Create new instance of neural networks map 
-- Documentation
+- New activation/sigmoid function (hyperbolic tangent)
 
 ### Changed
-- Add a new arity to `make-widget-async` to provide a different widget shape.
+- Renamed activation function to sigmoid function
 
 ### Removed
-- 
+- Binary sigmoid function- 
 
-### Fixed
-- 
+## 0.1.1-SNAPSHOT
+### Added
+- Line search for gradient descent optimizer
+
+## 0.1.0-SNAPSHOT
+Initial release

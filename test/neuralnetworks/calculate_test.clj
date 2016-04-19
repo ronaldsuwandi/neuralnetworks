@@ -1,7 +1,7 @@
 (ns neuralnetworks.calculate-test
   (:require [clojure.test :refer :all]
             [neuralnetworks.calculate :as calculate]
-            [neuralnetworks.activation-fn :as activation-fn]
+            [neuralnetworks.sigmoid-fn :as sigmoid-fn]
             [neuralnetworks.utils :refer :all]
             [clojure.core.matrix :as m]))
 
@@ -12,7 +12,7 @@
                         [1 1 1]])
         weights (m/array [-60 40 40])
         expected (m/array [0 0 0 1])
-        output (calculate/output-nodes input weights activation-fn/sigmoid)]
+        output (calculate/output-nodes input weights sigmoid-fn/standard-logistic)]
     (is (m/equals expected output 1e-6))))
 
 (deftest test-regularization-cost
@@ -42,7 +42,7 @@
         last-activation-nodes (m/array [[0.888659 0.907427 0.923304 0.936649]
                                         [0.838178 0.860282 0.879799 0.896917]
                                         [0.923414 0.938577 0.950898 0.960850]])
-        result (calculate/forward-propagate input all-thetas activation-fn/sigmoid)]
+        result (calculate/forward-propagate input all-thetas sigmoid-fn/standard-logistic)]
 
     (is (m/equals first-activation-nodes (get result 0) 1e-6))
     (is (m/equals last-activation-nodes (get result 1) 1e-6))))
@@ -61,7 +61,7 @@
         output (m/array [[0 0 0 1]
                          [0 1 0 0]
                          [0 0 1 0]])
-        activation-nodes (calculate/forward-propagate input all-thetas activation-fn/sigmoid)]
+        activation-nodes (calculate/forward-propagate input all-thetas sigmoid-fn/standard-logistic)]
     (is (approx 7.406969 (calculate/cost input all-thetas activation-nodes output 0)))
     (is (approx 19.473636 (calculate/cost input all-thetas activation-nodes output 4)))))
 
@@ -79,7 +79,7 @@
         output (m/array [[0 0 0 1]
                          [0 1 0 0]
                          [0 0 1 0]])
-        activation-nodes (calculate/forward-propagate input all-thetas activation-fn/sigmoid)
+        activation-nodes (calculate/forward-propagate input all-thetas sigmoid-fn/standard-logistic)
         delta2 (m/array [[2.650251 1.377940 1.435009]
                          [1.706287 1.033853 1.106760]
                          [1.754003 0.768939 0.779311]

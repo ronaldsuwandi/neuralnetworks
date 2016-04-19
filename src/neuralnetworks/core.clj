@@ -1,5 +1,5 @@
 (ns neuralnetworks.core
-  (:require [neuralnetworks.activation-fn :refer [sigmoid]]
+  (:require [neuralnetworks.sigmoid-fn :refer [standard-logistic]]
             [neuralnetworks.calculate :as calculate]
             [neuralnetworks.optimizer :as optimizer]
             [neuralnetworks.optimizer.gradient-descent :refer [gradient-descent]]
@@ -14,7 +14,7 @@
         thetas-dimensions (mapv m/shape thetas)
         cost-fn (calculate/cost-fn (:input instance)
                                    (:output instance)
-                                   (:activation-fn instance)
+                                   (:sigmoid-fn instance)
                                    (:regularization-rate instance)
                                    thetas-dimensions)
         optimized (optimizer/optimize (:optimizer instance) cost-fn (m/as-vector thetas))]
@@ -27,7 +27,7 @@
   [instance input]
   (let [activation-nodes (calculate/forward-propagate input
                                                       @(:thetas (:states instance))
-                                                      (:activation-fn instance))]
+                                                      (:sigmoid-fn instance))]
     (first (rseq activation-nodes))))
 
 
@@ -97,7 +97,7 @@
      :input input-matrix
      :output output-matrix
      :regularization-rate value (default is 0)
-     :activation-fn function (default is sigmoid)
+     :sigmoid-fn function (default is standard logistic)
      :optimizer optimizer function (default is gradient-descent with the default options)
      :states {
                :thetas [theta-matrix-1, theta-matrix-2, ...]
@@ -109,14 +109,16 @@
   ([input thetas output]
    (new-instance input thetas output {}))
   ([input thetas output options]
-   (let [merged-options (merge {:regularization-rate 0
-                                :activation-fn       sigmoid
-                                :optimizer (gradient-descent 8 0.5 [(max-iterations 100)])}
-                               options)]
+   (let [merged-options (merge
+                          {:regularization-rate 0
+                           :sigmoid-fn          (standard-logistic)
+                           :cost-fn 1 ;FIXME
+                           :optimizer           (gradient-descent 8 0.5 [(max-iterations 100)])}
+                          options)]
      {:input               input
       :output              output
       :regularization-rate (:regularization-rate merged-options)
-      :activation-fn       (:activation-fn merged-options)
+      :sigmoid-fn          (:sigmoid-fn merged-options)
       :optimizer           (:optimizer merged-options)
       :states              {:thetas    (atom thetas)
                             :iteration (atom 0)

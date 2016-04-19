@@ -18,7 +18,10 @@ Currently it has the following features
 - Multiple stopping conditions. Currently it supports stopping conditions based on error or number
   of iterations. If multiple stopping conditions are provided, it will be treated as `OR` (if either
   stopping condition is fulfilled, the optimizer stops training)
-
+- Swappable activation/sigmoid function. Currently it has 2 functions:
+  - [Standard logistic function](https://en.wikipedia.org/wiki/Logistic_function)
+  - Optimized hyperbolic tangent function. Reference: [Efficient BackProp](http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf)
+  
 **Note - this library is not yet production ready**
 
 ## Usage
@@ -51,7 +54,7 @@ the available options
 
 * `:learning-rate` (or alpha) - default value is 1.0
 * `:regularization-rate` (or lambda) - default value is 0.0
-* `:activation-fn` - default value is sigmoid function
+* `:sigmoid-fn` - default value is standard logistic function
 * `:optimizer` - default value is gradient descent with the following settings
     * learning rate of 8
     * learning rate update rate of 0.5
@@ -60,11 +63,11 @@ the available options
 Example of options
 
 ```clojure
-(use '[neuralnetworks.activation-fn])
+(use '[neuralnetworks.sigmoid-fn])
 (use '[neuralnetworks.optimizer.gradient-descent])
 (use '[neuralnetworks.stopping-conditions])
 
-(def options {:activation-fn sigmoid
+(def options {:sigmoid-fn standard-logistic
               :stopping-conditions [(max-iterations 100)]
               :optimizer (gradient-descent 8 0.5 [(max-iterations 100)]})
 ```

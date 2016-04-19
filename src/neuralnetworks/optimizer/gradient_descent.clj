@@ -31,11 +31,14 @@
               gradient-length-squard-with-alpha (-> theta-gradients
                                                     m/length-squared
                                                     (* alpha 0.5))]
-
+          (prn "t=" (m/sub thetas (m/mul alpha theta-gradients)))
+          (prn "a=" alpha " cost-t-a=" cost-theta-with-alpha " costt=" cost-theta " grad=" gradient-length-squard-with-alpha)
           (if (or (<= cost-theta-with-alpha (- cost-theta gradient-length-squard-with-alpha))
                   (approx alpha 0.0 1e-10)
                   (m/equals theta-gradients zero-matrix 1e-10))
-            alpha
+            (do (prn "a=" alpha)
+                alpha)
+
             (recur (* beta alpha))))))))
 
 (defrecord GradientDescent [initial-learning-rate learning-rate-update-rate stopping-conditions]
@@ -76,3 +79,5 @@
   [initial-learning-rate learning-rate-update-rate stopping-conditions]
   {:pre [(> learning-rate-update-rate 0) (<= learning-rate-update-rate 1)]}
   (->GradientDescent initial-learning-rate learning-rate-update-rate stopping-conditions))
+
+(alter-meta! #'->GradientDescent assoc :no-doc true)

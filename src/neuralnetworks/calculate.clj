@@ -4,8 +4,8 @@
             [neuralnetworks.utils :refer :all]))
 
 (defn output-nodes
-  [input theta activation-fn]
-  (m/emap activation-fn (m/mmul input theta)))
+  [input theta sigmoid-fn]
+  (m/emap sigmoid-fn (m/mmul input theta)))
 
 (defn regularization-cost
   "thetas is a vector of matrices"
@@ -19,12 +19,18 @@
 
 (defn forward-propagate
   "Will return list of activation nodes for each theta"
-  [input thetas activation-fn]
+  [input thetas sigmoid-fn]
   (when (seq thetas)
     (loop [[theta & remaining-thetas] thetas
            input-with-bias (bias/append input)
            all-activation-nodes []]
-      (let [activation-nodes (output-nodes input-with-bias (m/transpose theta) activation-fn)
+      (let [activation-nodes (output-nodes input-with-bias (m/transpose theta) sigmoid-fn)
+            ; TODO - normalize output somewhere else? settings?
+            activation-nodes (m/emap (fn [n]
+                                       (cond
+                                         (< n -1.0) -1.0
+                                         (> n 1.0) 1.0
+                                         :else n)) activation-nodes)
             all-activation-nodes (conj all-activation-nodes activation-nodes)]
         (if-not (empty? remaining-thetas)
           (let [activation-nodes-with-bias (bias/append activation-nodes)]
@@ -37,19 +43,28 @@
   [input thetas activation-nodes output lambda]
   (when (and (seq thetas) (seq activation-nodes))
     (let [regularization-cost (regularization-cost lambda (m/row-count input) thetas)
-          last-activation-nodes (get activation-nodes (dec (count activation-nodes)))]
-      (let [last-activation-nodes-count (m/row-count last-activation-nodes)
-            inner-cost-values (m/add
-                                (m/mul output (m/log last-activation-nodes))
-                                (m/mul (m/sub 1 output)
-                                       (m/log (m/sub 1 last-activation-nodes))))]
-        (+ (/ (m/esum inner-cost-values) (- last-activation-nodes-count))
-           regularization-cost)))))
+          last-activation-nodes (get activation-nodes (dec (count activation-nodes)))
+          last-activation-nodes-count (m/row-count last-activation-nodes)
+          inner-cost-values (m/add
+                              (m/mul output (m/log last-activation-nodes))
+                              (m/mul (m/sub 1 output)
+                                     (m/log (m/sub 1 last-activation-nodes))))]
+      (prn "output=" output)
+      (prn "lastat" last-activation-nodes)
+      (prn "first-term=" (m/mul output (m/log last-activation-nodes)))
+      (prn "second-term=" (m/mul (m/sub 1 output)
+                                 (m/log (m/sub 1 last-activation-nodes))))
+      (+ (/ (m/esum inner-cost-values) (- last-activation-nodes-count))
+         regularization-cost))))
+
+;(defn derivative
+;  "Returns the derivative for the given activated node (after applying sigmoid function)"
+;  [activated-nodes]
+;  (m/mul activated-nodes (m/sub 1 activated-nodes)))
 
 (defn derivative
-  "Returns the derivative for the given activated node (after applying sigmoid function)"
   [activated-nodes]
-  (m/mul activated-nodes (m/sub 1 activated-nodes)))
+  (m/sub 1 (m/pow activated-nodes 2)))
 
 (defn delta
   "Calculate the 'error' (delta) from the expected input/output for the given thetas.
@@ -111,10 +126,10 @@
         reshaped-thetas))))
 
 (defn cost-fn
-  [input output activation-fn lambda thetas-dimensions]
+  [input output sigmoid-fn lambda thetas-dimensions]
   (fn [thetas]
     (let [reshaped-thetas (reshape-thetas thetas thetas-dimensions)
-          activation-nodes (forward-propagate input reshaped-thetas activation-fn)
+          activation-nodes (forward-propagate input reshaped-thetas sigmoid-fn)
           cost-value (cost input reshaped-thetas activation-nodes output lambda)
           deltas (delta input reshaped-thetas activation-nodes output)
           theta-gradients (theta-gradient deltas reshaped-thetas lambda (m/row-count input))
@@ -122,3 +137,5 @@
       {:cost      cost-value
        :error     error-value
        :gradients theta-gradients})))
+
+; FIXME - update cost-fn + sigmoid-fn

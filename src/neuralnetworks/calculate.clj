@@ -1,21 +1,12 @@
 (ns neuralnetworks.calculate
   (:require [clojure.core.matrix :as m]
+            [neuralnetworks.sigmoid-fn :as sigmoid]
             [neuralnetworks.bias-vector :as bias]
             [neuralnetworks.utils :refer :all]))
 
 (defn output-nodes
   [input theta sigmoid-fn]
-  (m/emap sigmoid-fn (m/mmul input theta)))
-
-(defn regularization-cost
-  "thetas is a vector of matrices"
-  ^double [lambda input-count thetas]
-  (let [lambda-constant (/ lambda (* 2 input-count))
-        thetas-without-bias-column (map #(m/select % :all :rest) thetas)
-        sum-of-thetas-squared (->> (map #(m/pow % 2) thetas-without-bias-column)
-                                   (map m/esum)
-                                   (reduce +))]
-    (* sum-of-thetas-squared lambda-constant)))
+  (m/emap #(sigmoid/f sigmoid-fn %) (m/mmul input theta)))
 
 (defn forward-propagate
   "Will return list of activation nodes for each theta"
@@ -25,12 +16,6 @@
            input-with-bias (bias/append input)
            all-activation-nodes []]
       (let [activation-nodes (output-nodes input-with-bias (m/transpose theta) sigmoid-fn)
-            ; TODO - normalize output somewhere else? settings?
-            activation-nodes (m/emap (fn [n]
-                                       (cond
-                                         (< n -1.0) -1.0
-                                         (> n 1.0) 1.0
-                                         :else n)) activation-nodes)
             all-activation-nodes (conj all-activation-nodes activation-nodes)]
         (if-not (empty? remaining-thetas)
           (let [activation-nodes-with-bias (bias/append activation-nodes)]
@@ -39,37 +24,10 @@
                    all-activation-nodes))
           all-activation-nodes)))))
 
-(defn cost
-  [input thetas activation-nodes output lambda]
-  (when (and (seq thetas) (seq activation-nodes))
-    (let [regularization-cost (regularization-cost lambda (m/row-count input) thetas)
-          last-activation-nodes (get activation-nodes (dec (count activation-nodes)))
-          last-activation-nodes-count (m/row-count last-activation-nodes)
-          inner-cost-values (m/add
-                              (m/mul output (m/log last-activation-nodes))
-                              (m/mul (m/sub 1 output)
-                                     (m/log (m/sub 1 last-activation-nodes))))]
-      (prn "output=" output)
-      (prn "lastat" last-activation-nodes)
-      (prn "first-term=" (m/mul output (m/log last-activation-nodes)))
-      (prn "second-term=" (m/mul (m/sub 1 output)
-                                 (m/log (m/sub 1 last-activation-nodes))))
-      (+ (/ (m/esum inner-cost-values) (- last-activation-nodes-count))
-         regularization-cost))))
-
-;(defn derivative
-;  "Returns the derivative for the given activated node (after applying sigmoid function)"
-;  [activated-nodes]
-;  (m/mul activated-nodes (m/sub 1 activated-nodes)))
-
-(defn derivative
-  [activated-nodes]
-  (m/sub 1 (m/pow activated-nodes 2)))
-
 (defn delta
   "Calculate the 'error' (delta) from the expected input/output for the given thetas.
    This will also calculate the delta for each hidden layers."
-  [input thetas activation-nodes output]
+  [input thetas activation-nodes output sigmoid-fn]
   (when (and (seq thetas) (seq activation-nodes))
     ; error/delta is calculated backwards, thus the reverse order of activation nodes and thetas
     (let [[activation-node & remaining-activation-nodes] (rseq activation-nodes)
@@ -80,7 +38,7 @@
              deltas []]
         (if-not (empty? remaining-thetas)
           (let [error (m/mul (bias/delete (m/mmul last-error theta))
-                             (derivative activation-node))
+                             (sigmoid/f' sigmoid-fn activation-node))
                 delta (m/mmul (m/transpose last-error) (bias/append activation-node))
                 deltas (conj deltas delta)]
             (recur error remaining-activation-nodes remaining-thetas deltas))
@@ -104,12 +62,6 @@
          (map #(m/div % input-count))
          (mapv (partial theta-gradient-regularization lambda-constant) thetas))))
 
-(defn error
-  ^double [expected output]
-  (let [data-count (m/row-count output)
-        difference-squared (m/pow (m/sub output expected) 2)]
-    (double (/ (m/esum difference-squared) (* 2 data-count)))))
-
 (defn reshape-thetas
   "Reshapes theta vectors based on the given thetas-dimensions where thetas-dimensions are vector of
    matrices dimensions"
@@ -126,16 +78,14 @@
         reshaped-thetas))))
 
 (defn cost-fn
-  [input output sigmoid-fn lambda thetas-dimensions]
-  (fn [thetas]
+  [input output error-fn sigmoid-fn lambda thetas-dimensions]
+  (fn [thetas & args]
     (let [reshaped-thetas (reshape-thetas thetas thetas-dimensions)
           activation-nodes (forward-propagate input reshaped-thetas sigmoid-fn)
-          cost-value (cost input reshaped-thetas activation-nodes output lambda)
-          deltas (delta input reshaped-thetas activation-nodes output)
-          theta-gradients (theta-gradient deltas reshaped-thetas lambda (m/row-count input))
-          error-value (error output (first (rseq activation-nodes)))]
-      {:cost      cost-value
-       :error     error-value
-       :gradients theta-gradients})))
-
-; FIXME - update cost-fn + sigmoid-fn
+          error-value (error-fn input reshaped-thetas activation-nodes output lambda)
+          result {:cost error-value}]
+      (if (contains? (set args) :skip-gradient)
+        result
+        (let [deltas (delta input reshaped-thetas activation-nodes output sigmoid-fn)
+              theta-gradients (theta-gradient deltas reshaped-thetas lambda (m/row-count input))]
+          (assoc result :gradients theta-gradients))))))

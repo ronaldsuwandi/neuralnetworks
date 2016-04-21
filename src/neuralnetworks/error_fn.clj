@@ -1,4 +1,4 @@
-(ns neuralnetworks.cost-fn
+(ns neuralnetworks.error-fn
   (:require [clojure.core.matrix :as m]))
 
 (defn regularization-cost
@@ -23,11 +23,6 @@
                             (m/mul output (m/log last-activation-nodes))
                             (m/mul (m/sub 1 output)
                                    (m/log (m/sub 1 last-activation-nodes))))]
-    (prn "output=" output)
-    (prn "lastat" last-activation-nodes)
-    (prn "first-term=" (m/mul output (m/log last-activation-nodes)))
-    (prn "second-term=" (m/mul (m/sub 1 output)
-                               (m/log (m/sub 1 last-activation-nodes))))
     (+ (/ (m/esum inner-cost-values) (- last-activation-nodes-count))
        regularization-cost)))
 

@@ -1,5 +1,6 @@
 (ns neuralnetworks.core
-  (:require [neuralnetworks.sigmoid-fn :refer [standard-logistic]]
+  (:require [neuralnetworks.sigmoid-fn :as sigmoid]
+            [neuralnetworks.error-fn :as error]
             [neuralnetworks.calculate :as calculate]
             [neuralnetworks.optimizer :as optimizer]
             [neuralnetworks.optimizer.gradient-descent :refer [gradient-descent]]
@@ -7,17 +8,27 @@
             [clojure.core.matrix :as m]))
 
 (defn train!
-  "Train the neural networks. This will update the thetas/weights"
-  [instance]
+  "Train the neural networks. This will update the thetas/weights
+
+   Stopping conditions is a vector of stopping condition functions used by the optimizer which in
+   turn used by neural networks training function.
+
+   If multiple stopping conditions are provided, it will be treated as *OR* meaning as long as one
+   of the condition is satisfied, training will be stopped (i.e. optimizer is finished)"
+  [instance stopping-conditions]
   (let [states (:states instance)
         thetas @(:thetas states)
         thetas-dimensions (mapv m/shape thetas)
         cost-fn (calculate/cost-fn (:input instance)
                                    (:output instance)
+                                   (:error-fn instance)
                                    (:sigmoid-fn instance)
                                    (:regularization-rate instance)
                                    thetas-dimensions)
-        optimized (optimizer/optimize (:optimizer instance) cost-fn (m/as-vector thetas))]
+        optimized (optimizer/optimize (:optimizer instance)
+                                      cost-fn
+                                      (m/as-vector thetas)
+                                      stopping-conditions)]
     (reset! (:iteration states) (:iteration optimized))
     (reset! (:thetas states) (calculate/reshape-thetas (:thetas optimized) thetas-dimensions))
     instance))
@@ -64,14 +75,38 @@
             (recur (flatten [next-nodes remaining-nodes])
                    thetas)))))))
 
+
 (defn new-instance
   "Creates new instance of neural networks.
+
+   Problem-type accepts either `:classification` or `:regression`. Problem-type determines the
+   default sigmoid and error function
+
+   For `classification` it will use
+
+   ```
+   {:sigmoid-fn standard-logistic
+    :error-fn cross-entropy}
+   ```
+
+   for the options. Cross-entropy is more suitable because it penalizes misclassification
+
+   Otherwise, for `:regression` it will use
+
+   ```
+   {:sigmoid-fn hyperbolic-tangent
+    :error-fn mean-squared-error}
+   ```
+
+   Mean squared error is best suited for regression (curve-fitting) problem
 
    Options will be a hash map of
 
    ```
    {:regularization-rate value
     :activation-fn function
+    :sigmoid-fn function       ; optional, if you want to customize/override sigmoid function
+    :error-fn function         ; optional, if you want to customize/override error function
     :optimizer optimizer}
    ```
 
@@ -81,24 +116,22 @@
    If optimizer is not specified, by default it will use gradient descent optimizer with the
    following settings:
 
-   * initial learning rate of 8
+   * initial learning rate of 4
    * learning rate update of 0.5
-   * single stopping condition of 100 iterations
 
-   Stopping conditions is a vector of stopping condition functions used by the optimizer which in
-   turn used by neural networks training function.
-
-   If multiple stopping conditions are provided, it will be treated as *OR* meaning as long as one
-   of the condition is satisfied, training will be stopped (i.e. optimizer is finished)
+   *Note* it is important to always normalize the input and output nodes for better performance
 
    Returns a hashmap
    ```
    {
      :input input-matrix
      :output output-matrix
-     :regularization-rate value (default is 0)
-     :sigmoid-fn function (default is standard logistic)
-     :optimizer optimizer function (default is gradient-descent with the default options)
+     :regularization-rate value ; default is 0
+     :sigmoid-fn function       ; default is standard logistic for classification, hyperbolic
+                                ; tangent for regression
+     :errror-fn function        ; default is cross-entropy for classification, mean squared error
+                                ; for regression
+     :optimizer function        ; default is gradient-descent with the default options
      :states {
                :thetas [theta-matrix-1, theta-matrix-2, ...]
                :iteration (atom 0)
@@ -106,20 +139,23 @@
              }
    }
    ```"
-  ([input thetas output]
-   (new-instance input thetas output {}))
-  ([input thetas output options]
-   (let [merged-options (merge
-                          {:regularization-rate 0
-                           :sigmoid-fn          (standard-logistic)
-                           :cost-fn 1 ;FIXME
-                           :optimizer           (gradient-descent 8 0.5 [(max-iterations 100)])}
-                          options)]
+  ([input thetas output problem-type]
+   {:pre [(contains? #{:classification :regression} problem-type)]}
+   (new-instance input thetas output problem-type {}))
+  ([input thetas output problem-type options]
+   {:pre [(contains? #{:classification :regression} problem-type)]}
+   (let [default-options-for-type {:classification {:sigmoid-fn (sigmoid/standard-logistic)
+                                                    :error-fn   error/cross-entropy}
+                                   :regression     {:sigmoid-fn (sigmoid/hyperbolic-tangent)
+                                                    :error-fn   error/mean-squared-error}}
+         default-options {:regularization-rate 0
+                          :optimizer           (gradient-descent 4 0.5)}
+         merged-options (merge default-options (get default-options-for-type problem-type) options)]
      {:input               input
       :output              output
       :regularization-rate (:regularization-rate merged-options)
       :sigmoid-fn          (:sigmoid-fn merged-options)
+      :error-fn            (:error-fn merged-options)
       :optimizer           (:optimizer merged-options)
       :states              {:thetas    (atom thetas)
-                            :iteration (atom 0)
-                            :error     (atom nil)}})))
+                            :iteration (atom 0)}})))

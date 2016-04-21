@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [neuralnetworks.calculate :as calculate]
             [neuralnetworks.sigmoid-fn :as sigmoid-fn]
+            [neuralnetworks.error-fn :as error-fn]
             [neuralnetworks.utils :refer :all]
             [clojure.core.matrix :as m]))
 
@@ -12,18 +13,8 @@
                         [1 1 1]])
         weights (m/array [-60 40 40])
         expected (m/array [0 0 0 1])
-        output (calculate/output-nodes input weights sigmoid-fn/standard-logistic)]
+        output (calculate/output-nodes input weights (sigmoid-fn/standard-logistic))]
     (is (m/equals expected output 1e-6))))
-
-(deftest test-regularization-cost
-  (let [theta1 (m/array [[0.10000 0.30000 0.50000]
-                         [0.20000 0.40000 0.60000]])
-        theta2 (m/array [[0.70000 1.10000 1.50000]
-                         [0.80000 1.20000 1.60000]
-                         [0.90000 1.30000 1.70000]
-                         [1.00000 1.40000 1.80000]])
-        expected 12.067]
-    (is (approx expected (calculate/regularization-cost 4 3 [theta1 theta2]) 0.001))))
 
 (deftest test-forward-propagate
   (let [input (m/array [[0.54030 -0.41615]
@@ -42,13 +33,15 @@
         last-activation-nodes (m/array [[0.888659 0.907427 0.923304 0.936649]
                                         [0.838178 0.860282 0.879799 0.896917]
                                         [0.923414 0.938577 0.950898 0.960850]])
-        result (calculate/forward-propagate input all-thetas sigmoid-fn/standard-logistic)]
+        result (calculate/forward-propagate input all-thetas (sigmoid-fn/standard-logistic))]
 
     (is (m/equals first-activation-nodes (get result 0) 1e-6))
     (is (m/equals last-activation-nodes (get result 1) 1e-6))))
 
 (deftest test-cost
-  (let [input (m/array [[0.54030 -0.41615]
+  (let [sigmoid (sigmoid-fn/standard-logistic)
+        cost error-fn/cross-entropy
+        input (m/array [[0.54030 -0.41615]
                         [-0.98999 -0.65364]
                         [0.28366 0.96017]])
         theta1 (m/array [[0.10000 0.30000 0.50000]
@@ -58,15 +51,35 @@
                          [0.90000 1.30000 1.70000]
                          [1.00000 1.40000 1.80000]])
         all-thetas [theta1 theta2]
+        thetas-dimensions (mapv m/shape all-thetas)
+        thetas (m/as-vector all-thetas)
         output (m/array [[0 0 0 1]
                          [0 1 0 0]
                          [0 0 1 0]])
-        activation-nodes (calculate/forward-propagate input all-thetas sigmoid-fn/standard-logistic)]
-    (is (approx 7.406969 (calculate/cost input all-thetas activation-nodes output 0)))
-    (is (approx 19.473636 (calculate/cost input all-thetas activation-nodes output 4)))))
+        cost-fn-no-regularization (calculate/cost-fn input output cost sigmoid 0 thetas-dimensions)
+        cost-fn-regularization (calculate/cost-fn input output cost sigmoid 4 thetas-dimensions)]
+    (is (approx 7.406969 (:cost (cost-fn-no-regularization thetas))))
+    (is (approx 19.473636 (:cost (cost-fn-regularization thetas))))))
+
+(deftest test-cost-args
+  (let [sigmoid (sigmoid-fn/standard-logistic)
+        cost error-fn/cross-entropy
+        input (m/array [[0 0]
+                        [1 1]
+                        [1 1]])
+        theta (m/array [[1 2 3]
+                        [4 5 6]])
+        thetas-dimensions (mapv m/shape [theta])
+        output (m/array [[0 0]
+                         [0 1]
+                         [0 0]])
+        cost-fn (calculate/cost-fn input output cost sigmoid 0 thetas-dimensions)]
+    (is (not (contains? (cost-fn (m/as-vector theta) :skip-gradient) :gradients)))
+    (is (contains? (cost-fn (m/as-vector theta)) :gradients))))
 
 (deftest test-delta
-  (let [input (m/array [[0.54030 -0.41615]
+  (let [sigmoid (sigmoid-fn/standard-logistic)
+        input (m/array [[0.54030 -0.41615]
                         [-0.98999 -0.65364]
                         [0.28366 0.96017]])
         theta1 (m/array [[0.10000 0.30000 0.50000]
@@ -79,14 +92,14 @@
         output (m/array [[0 0 0 1]
                          [0 1 0 0]
                          [0 0 1 0]])
-        activation-nodes (calculate/forward-propagate input all-thetas sigmoid-fn/standard-logistic)
+        activation-nodes (calculate/forward-propagate input all-thetas sigmoid)
         delta2 (m/array [[2.650251 1.377940 1.435009]
                          [1.706287 1.033853 1.106760]
                          [1.754003 0.768939 0.779311]
                          [1.794417 0.935655 0.966993]])
         delta1 (m/array [[2.298415 -0.082621 -0.074786]
                          [2.939692 -0.107535 -0.161585]])
-        deltas (calculate/delta input all-thetas activation-nodes output)]
+        deltas (calculate/delta input all-thetas activation-nodes output sigmoid)]
     (is (m/equals delta1 (get deltas 0) 1e-6))
     (is (m/equals delta2 (get deltas 1) 1e-6))))
 
@@ -125,14 +138,6 @@
     (is (m/equals theta-gradient2-no-lambda (get theta-gradients-no-lambda 1) 1e-6))
     (is (m/equals theta-gradient1-lambda (get theta-gradients-lambda 0) 1e-6))
     (is (m/equals theta-gradient2-lambda (get theta-gradients-lambda 1) 1e-6))))
-
-(deftest test-error
-  (let [expected-output (m/array [[1 0.5 0.1]
-                                  [0.8 0.9 1]])
-        output (m/array [[1 0.4 0.22]
-                         [0.7 1 0.95]])
-        expected-error 0.011725]
-    (is (approx expected-error (calculate/error expected-output output) 1e-6))))
 
 (deftest test-reshape-thetas
   (let [original-thetas [(m/array [[0 1 2] [3 4 5]])

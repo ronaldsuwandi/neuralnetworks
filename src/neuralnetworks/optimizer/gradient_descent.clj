@@ -77,3 +77,4 @@
   (->GradientDescent initial-learning-rate learning-rate-update-rate))
 
 (alter-meta! #'->GradientDescent assoc :no-doc true)
+(alter-meta! #'map->GradientDescent assoc :no-doc true)

@@ -49,4 +49,6 @@
   (->StandardLogistic))
 
 (alter-meta! #'->HyperbolicTangent assoc :no-doc true)
+(alter-meta! #'map->HyperbolicTangent assoc :no-doc true)
 (alter-meta! #'->StandardLogistic assoc :no-doc true)
+(alter-meta! #'map->StandardLogistic assoc :no-doc true)

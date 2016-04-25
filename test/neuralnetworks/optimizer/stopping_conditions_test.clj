@@ -3,7 +3,7 @@
             [neuralnetworks.optimizer.stopping-conditions :as s]))
 
 (deftest test-error-rate
-  (let [stopping-fn (s/min-error-rate 0.01)]
+  (let [stopping-fn (s/max-error 0.01)]
     (is (not (stopping-fn {:error 0.5})))
     (is (stopping-fn {:error 0}))
     (is (stopping-fn {:error 1e-10}))))

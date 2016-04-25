@@ -26,26 +26,25 @@
     (let [zero-matrix (m/zero-vector (m/length theta-gradients))]
       (loop [alpha init-alpha]
         (let [theta-with-gradient (m/sub thetas (m/mul alpha theta-gradients))
-              cost-theta-with-alpha (:cost (cost-fn theta-with-gradient))
+              cost-theta-with-alpha (:cost (cost-fn theta-with-gradient :skip-gradient))
               cost-theta (:cost (cost-fn thetas))
               gradient-length-squard-with-alpha (-> theta-gradients
                                                     m/length-squared
                                                     (* alpha 0.5))]
-
           (if (or (<= cost-theta-with-alpha (- cost-theta gradient-length-squard-with-alpha))
                   (approx alpha 0.0 1e-10)
                   (m/equals theta-gradients zero-matrix 1e-10))
             alpha
             (recur (* beta alpha))))))))
 
-(defrecord GradientDescent [initial-learning-rate learning-rate-update-rate stopping-conditions]
+(defrecord GradientDescent [initial-learning-rate learning-rate-update-rate]
   Optimizer
-  (optimize [this cost-fn thetas]
+  (optimize [this cost-fn thetas stopping-conditions]
     (loop [iteration 0
            thetas thetas]
       (let [cost (cost-fn thetas)
             optimizer (assoc this :iteration iteration
-                                  :error (:error cost)
+                                  :error (:cost cost)
                                   :thetas thetas)]
         (when-not (contains? cost :gradients)
           (throw (ex-info "Gradients is not returned by the cost function " {:cost cost})))
@@ -73,6 +72,8 @@
    {:cost 1.5142
     :gradients [1.2 -0.5]}
    ```"
-  [initial-learning-rate learning-rate-update-rate stopping-conditions]
+  [initial-learning-rate learning-rate-update-rate]
   {:pre [(> learning-rate-update-rate 0) (<= learning-rate-update-rate 1)]}
-  (->GradientDescent initial-learning-rate learning-rate-update-rate stopping-conditions))
+  (->GradientDescent initial-learning-rate learning-rate-update-rate))
+
+(alter-meta! #'->GradientDescent assoc :no-doc true)

@@ -34,11 +34,14 @@
 
 (deftest test-check-for-gradients
   (let [cost-fn (fn [_] {:cost 123})
-        gradient-descent (gd/gradient-descent 1 1 [(max-iterations 2)])]
-    (is (thrown? Exception (optimizer/optimize gradient-descent cost-fn [1])))))
+        gradient-descent (gd/gradient-descent 1 1)]
+    (is (thrown? Exception (optimizer/optimize gradient-descent
+                                               cost-fn
+                                               [1]
+                                               [(max-iterations 2)])))))
 
 (deftest test-gradient-descent-optimizer
-  (let [cost-fn (fn [theta]
+  (let [cost-fn (fn [theta & _]
                   ; cost function is [x.^2 + y.^2]
                   ; gradient is the derivative [2x 2y]
                   (let [cost (m/esum (m/pow theta 2))]
@@ -47,19 +50,20 @@
                      :error     (Math/abs (- 0 cost))
                      :theta     theta}))
         initial-theta [1000000 -1000000]
-        gradient-descent (gd/gradient-descent 4 0.8 [(max-iterations 15)])
-        gradient-descent-without-line-search (gd/gradient-descent 0.1 1 [(max-iterations 100)])
-        result (optimizer/optimize gradient-descent cost-fn initial-theta)
+        gradient-descent (gd/gradient-descent 4 0.8)
+        gradient-descent-without-line-search (gd/gradient-descent 0.1 1)
+        result (optimizer/optimize gradient-descent cost-fn initial-theta [(max-iterations 15)])
         result-without-line-search (optimizer/optimize gradient-descent-without-line-search
                                                        cost-fn
-                                                       initial-theta)]
+                                                       initial-theta
+                                                       [(max-iterations 100)])]
 
     (is (approx 0 (:error result) 1e-12))
     (is (approx 0 (:error result-without-line-search) 1e-6))
     (is (< (:error result) (:error result-without-line-search)))))
 
 (deftest test-line-search
-  (let [cost-fn (fn [theta]
+  (let [cost-fn (fn [theta & _]
                   ; cost function is [x.^2 + y.^2]
                   ; gradient is the derivative [2x 2y]
                   (let [cost (m/esum (m/pow theta 2))]

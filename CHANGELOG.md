@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.1
+### Changed
+- Removed codox factory function documentation for defrecord
+
 ## 0.2.0
 ### Added
 - New activation/sigmoid function (hyperbolic tangent)

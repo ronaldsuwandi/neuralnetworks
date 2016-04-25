@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.org/ronaldsuwandi/neuralnetworks.svg?branch=master)](https://travis-ci.org/ronaldsuwandi/neuralnetworks) [![Dependency Status](https://www.versioneye.com/user/projects/57066022fcd19a004543fcfd/badge.svg?style=flat)](https://www.versioneye.com/user/projects/57066022fcd19a004543fcfd)
 
 Neural networks library for Clojure. Built on top of [core.matrix](https://github.com/mikera/core.matrix) 
-array programming API 
+array programming API. [API Documentation](https://ronaldsuwandi.github.io/neuralnetworks/) 
 
 Currently it has the following features
 

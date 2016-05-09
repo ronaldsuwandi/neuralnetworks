@@ -1,5 +1,6 @@
 (ns neuralnetworks.optimizer.gradient-descent
   (:require [clojure.core.matrix :as m]
+            [taoensso.timbre :as log]
             [neuralnetworks.utils :refer [approx]]
             [neuralnetworks.optimizer :refer :all]))
 
@@ -55,6 +56,7 @@
                                    learning-rate-update-rate
                                    thetas
                                    (m/as-vector (:gradients cost)))]
+            (log/tracef "Cost: %.6f (#%d)" (:cost cost) iteration)
             (recur (inc iteration)
                    (update-thetas thetas (m/as-vector (:gradients cost))
                                   alpha))))))))

@@ -1,4 +1,4 @@
-(defproject ronaldsuwandi/neuralnetworks "0.2.1"
+(defproject ronaldsuwandi/neuralnetworks "0.3.0-SNAPSHOT"
   :description "Neural networks library for Clojure. Built on top of core.matrix"
   :url "https://ronaldsuwandi.github.io/neuralnetworks/"
   :license {:name "MIT License"
@@ -20,4 +20,6 @@
                        ["quality"]
                        ["test"]]}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [net.mikera/core.matrix "0.51.0"]])
+                 [net.mikera/core.matrix "0.52.0"]
+                 [com.taoensso/timbre "4.3.1"]])
+

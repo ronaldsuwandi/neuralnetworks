@@ -5,7 +5,8 @@
             [neuralnetworks.optimizer :as optimizer]
             [neuralnetworks.optimizer.gradient-descent :refer [gradient-descent]]
             [neuralnetworks.optimizer.stopping-conditions :refer [max-iterations]]
-            [clojure.core.matrix :as m]))
+            [clojure.core.matrix :as m]
+            [taoensso.timbre :as log]))
 
 (defn train!
   "Train the neural networks. This will update the thetas/weights
@@ -16,7 +17,9 @@
    If multiple stopping conditions are provided, it will be treated as *OR* meaning as long as one
    of the condition is satisfied, training will be stopped (i.e. optimizer is finished)"
   [instance stopping-conditions]
-  (let [states (:states instance)
+  (log/debug "Training started")
+  (let [start (System/currentTimeMillis)
+        states (:states instance)
         thetas @(:thetas states)
         thetas-dimensions (mapv m/shape thetas)
         cost-fn (calculate/cost-fn (:input instance)
@@ -31,6 +34,7 @@
                                       stopping-conditions)]
     (reset! (:iteration states) (:iteration optimized))
     (reset! (:thetas states) (calculate/reshape-thetas (:thetas optimized) thetas-dimensions))
+    (log/debugf "Training completed in %dms" (- (System/currentTimeMillis) start))
     instance))
 
 (defn predict

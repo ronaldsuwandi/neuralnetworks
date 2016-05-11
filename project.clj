@@ -22,4 +22,3 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [net.mikera/core.matrix "0.52.0"]
                  [com.taoensso/timbre "4.3.1"]])
-

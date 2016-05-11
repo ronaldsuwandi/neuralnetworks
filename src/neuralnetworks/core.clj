@@ -1,6 +1,6 @@
 (ns neuralnetworks.core
   (:require [neuralnetworks.sigmoid-fn :as sigmoid]
-            [neuralnetworks.error-fn :as error]
+            [neuralnetworks.error-fn :as error-fn]
             [neuralnetworks.calculate :as calculate]
             [neuralnetworks.optimizer :as optimizer]
             [neuralnetworks.optimizer.gradient-descent :refer [gradient-descent]]
@@ -45,6 +45,14 @@
                                                       (:sigmoid-fn instance))]
     (first (rseq activation-nodes))))
 
+(defn error
+  "Calculate the error between the expected output node and the predicted nodes"
+  [instance input expected-output]
+  (let [thetas @(:thetas (:states instance))
+        activation-nodes (calculate/forward-propagate input
+                                                      thetas
+                                                      (:sigmoid-fn instance))]
+    ((:error-fn instance) input thetas activation-nodes expected-output 0)))
 
 (defn- randomize-theta
   [input-nodes output-nodes]
@@ -149,9 +157,9 @@
   ([input thetas output problem-type options]
    {:pre [(contains? #{:classification :regression} problem-type)]}
    (let [default-options-for-type {:classification {:sigmoid-fn (sigmoid/standard-logistic)
-                                                    :error-fn   error/cross-entropy}
+                                                    :error-fn   error-fn/cross-entropy}
                                    :regression     {:sigmoid-fn (sigmoid/hyperbolic-tangent)
-                                                    :error-fn   error/mean-squared-error}}
+                                                    :error-fn   error-fn/mean-squared-error}}
          default-options {:regularization-rate 0
                           :optimizer           (gradient-descent 4 0.5)}
          merged-options (merge default-options (get default-options-for-type problem-type) options)]

@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.3.0-SNAPSHOT [Unreleased]
+### Added
+- Added error function to measure the performance between expected output and predicted output
+- Added new logging dependencies. Setting the level to `:trace` will print the error value for each
+  iteration
+
 ## 0.2.1
 ### Changed
 - Removed codox factory function documentation for defrecord

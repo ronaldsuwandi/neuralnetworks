@@ -1,10 +1,11 @@
 # Change Log
 
-## 0.3.0-SNAPSHOT [Unreleased]
+## 0.3.0-SNAPSHOT
 ### Added
-- Added error function to measure the performance between expected output and predicted output
-- Added new logging dependencies. Setting the level to `:trace` will print the error value for each
+- Error function to measure the performance between expected output and predicted output
+- New logging dependencies. Setting the level to `:trace` will print the error value for each
   iteration
+- Training time is now stored in the instance `:state` variable (in milliseconds)
 
 ## 0.2.1
 ### Changed

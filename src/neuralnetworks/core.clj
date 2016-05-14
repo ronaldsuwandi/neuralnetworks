@@ -31,10 +31,12 @@
         optimized (optimizer/optimize (:optimizer instance)
                                       cost-fn
                                       (m/as-vector thetas)
-                                      stopping-conditions)]
+                                      stopping-conditions)
+        finish (System/currentTimeMillis)]
     (reset! (:iteration states) (:iteration optimized))
     (reset! (:thetas states) (calculate/reshape-thetas (:thetas optimized) thetas-dimensions))
-    (log/debugf "Training completed in %dms" (- (System/currentTimeMillis) start))
+    (reset! (:training-duration states) (- finish start))
+    (log/debugf "Training completed in %dms" (- finish start))
     instance))
 
 (defn predict
@@ -148,6 +150,7 @@
                :thetas [theta-matrix-1, theta-matrix-2, ...]
                :iteration (atom 0)
                :error (atom nil)
+               :training-durations 1 ; in ms
              }
    }
    ```"
@@ -170,4 +173,5 @@
       :error-fn            (:error-fn merged-options)
       :optimizer           (:optimizer merged-options)
       :states              {:thetas    (atom thetas)
-                            :iteration (atom 0)}})))
+                            :iteration (atom 0)
+                            :training-duration (atom 0)}})))

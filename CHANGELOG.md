@@ -7,6 +7,9 @@
   iteration
 - Training time is now stored in the instance `:state` variable (in milliseconds)
 
+### Fixed
+- Improved line search algorithm, up to 2x speedup
+
 ## 0.2.1
 ### Changed
 - Removed codox factory function documentation for defrecord

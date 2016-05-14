@@ -24,11 +24,11 @@
   [cost-fn init-alpha beta thetas theta-gradients]
   (if (approx beta 1.0 1e-10)
     init-alpha
-    (let [zero-matrix (m/zero-vector (m/length theta-gradients))]
+    (let [zero-matrix (m/zero-vector (m/length theta-gradients))
+          cost-theta (:cost (cost-fn thetas :skip-gradient))]
       (loop [alpha init-alpha]
         (let [theta-with-gradient (m/sub thetas (m/mul alpha theta-gradients))
               cost-theta-with-alpha (:cost (cost-fn theta-with-gradient :skip-gradient))
-              cost-theta (:cost (cost-fn thetas))
               gradient-length-squard-with-alpha (-> theta-gradients
                                                     m/length-squared
                                                     (* alpha 0.5))]

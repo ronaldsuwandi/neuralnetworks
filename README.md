@@ -70,3 +70,7 @@ Example of options
               :regularization-rate 0.001
               :optimizer (gradient-descent 8 0.5})
 ```
+
+## Examples
+
+[neuralnetworks-examples](https://github.com/ronaldsuwandi/neuralnetworks-examples)

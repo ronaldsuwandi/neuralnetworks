@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.3.0-SNAPSHOT
+## 0.3.0
 ### Added
 - Error function to measure the performance between expected output and predicted output
 - New logging dependencies. Setting the level to `:trace` will print the error value for each
